@@ -307,18 +307,32 @@ function showStatus(message, type, elementId) {
 function setupForegroundMessaging() {
     if (!messaging) return;
 
-    messaging.onMessage((payload) => {
+    messaging.onMessage(async (payload) => {
         console.log('Foreground message received:', payload);
         
         const notificationTitle = payload.notification.title;
         const notificationOptions = {
             body: payload.notification.body,
-            icon: '/icon.png' // 必要に応じてアイコンを追加
+            icon: '/icon.png', // 必要に応じてアイコンを追加
+            badge: '/badge.png',
+            tag: 'notification-' + Date.now(),
+            requireInteraction: false
         };
 
-        // ブラウザ通知を表示
+        // Service Worker経由で通知を表示
         if (Notification.permission === 'granted') {
-            new Notification(notificationTitle, notificationOptions);
+            try {
+                // Service Workerが利用可能な場合はそれを使用
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.ready;
+                    await registration.showNotification(notificationTitle, notificationOptions);
+                } else {
+                    // Service Workerがない場合のフォールバック
+                    new Notification(notificationTitle, notificationOptions);
+                }
+            } catch (error) {
+                console.error('Notification error:', error);
+            }
         }
     });
 }

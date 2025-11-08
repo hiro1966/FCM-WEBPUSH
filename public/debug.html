@@ -312,17 +312,32 @@
             console.log('Diagnostic Result:', result);
         }
 
-        function showTestNotification() {
+        async function showTestNotification() {
             if (Notification.permission !== 'granted') {
                 alert('先に通知を許可してください');
                 return;
             }
 
-            new Notification('テスト通知', {
-                body: 'これはテスト通知です',
-                icon: '/icon.png',
-                badge: '/badge.png'
-            });
+            try {
+                // Service Worker経由で通知を表示
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.ready;
+                    await registration.showNotification('テスト通知', {
+                        body: 'これはテスト通知です',
+                        icon: '/icon.png',
+                        badge: '/badge.png'
+                    });
+                } else {
+                    // Service Workerがない場合のフォールバック
+                    new Notification('テスト通知', {
+                        body: 'これはテスト通知です',
+                        icon: '/icon.png',
+                        badge: '/badge.png'
+                    });
+                }
+            } catch (error) {
+                alert('通知エラー: ' + error.message);
+            }
         }
     </script>
 </body>
