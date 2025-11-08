@@ -14,16 +14,30 @@
         </header>
 
         <main>
-            <!-- ステップ1: QRコード読み取り -->
+            <!-- ステップ1: QRコード読み取りまたは手動入力 -->
             <section class="card" id="step1">
-                <h2>📸 ステップ1: QRコード読み取り</h2>
+                <h2>📸 ステップ1: デバイスID入力</h2>
+                
+                <!-- 手動入力（テスト用） -->
+                <div class="form-group">
+                    <label for="manual-device-id">デバイスID (10桁の数字):</label>
+                    <input type="text" id="manual-device-id" placeholder="1234567890" maxlength="10" pattern="\d{10}">
+                    <button id="manual-input-btn" class="btn btn-primary" style="margin-top: 10px;">このIDで登録</button>
+                </div>
+                
+                <div style="text-align: center; margin: 20px 0; color: #999;">
+                    <span>━━━━━ または ━━━━━</span>
+                </div>
+                
+                <!-- QRコード読み取り -->
                 <div id="qr-reader-section">
-                    <button id="start-scan-btn" class="btn btn-primary">カメラを起動</button>
+                    <button id="start-scan-btn" class="btn btn-secondary">QRコードをスキャン</button>
                     <video id="qr-video" style="display: none;"></video>
                     <canvas id="qr-canvas" style="display: none;"></canvas>
-                    <div id="qr-result" class="result-box" style="display: none;">
-                        <p>デバイスID: <strong id="device-id-display"></strong></p>
-                    </div>
+                </div>
+                
+                <div id="qr-result" class="result-box" style="display: none;">
+                    <p>デバイスID: <strong id="device-id-display"></strong></p>
                 </div>
             </section>
 

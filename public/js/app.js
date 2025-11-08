@@ -16,6 +16,46 @@ function initializeFirebase() {
     }
 }
 
+// 手動入力でデバイスIDを設定
+function handleManualInput() {
+    const input = document.getElementById('manual-device-id');
+    const deviceId = input.value.trim();
+    
+    // 10桁の数字かチェック
+    if (!/^\d{10}$/.test(deviceId)) {
+        alert('デバイスIDは10桁の数字である必要があります');
+        input.focus();
+        return;
+    }
+    
+    // QRコード検出時と同じ処理を実行
+    handleDeviceIdDetected(deviceId);
+}
+
+// デバイスID検出時の共通処理（QRコードまたは手動入力）
+function handleDeviceIdDetected(deviceId) {
+    console.log('Device ID detected:', deviceId);
+    currentDeviceId = deviceId;
+
+    // カメラを停止（QRスキャン中の場合）
+    stopCamera();
+
+    // 結果を表示
+    document.getElementById('device-id-display').textContent = deviceId;
+    document.getElementById('qr-result').style.display = 'block';
+    document.getElementById('start-scan-btn').textContent = 'QRコードをスキャン';
+    document.getElementById('start-scan-btn').disabled = false;
+
+    // 手動入力フィールドにも表示
+    document.getElementById('manual-device-id').value = deviceId;
+
+    // ステップ2を表示
+    document.getElementById('step2').style.display = 'block';
+    
+    // ステップ2までスクロール
+    document.getElementById('step2').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 // QRコードスキャン開始
 async function startQRScanner() {
     const video = document.getElementById('qr-video');
@@ -79,22 +119,9 @@ function scanQRCode() {
     requestAnimationFrame(scanQRCode);
 }
 
-// QRコード検出時の処理
+// QRコード検出時の処理（handleDeviceIdDetectedを呼び出す）
 function handleQRCodeDetected(deviceId) {
-    console.log('QR Code detected:', deviceId);
-    currentDeviceId = deviceId;
-
-    // カメラを停止
-    stopCamera();
-
-    // 結果を表示
-    document.getElementById('device-id-display').textContent = deviceId;
-    document.getElementById('qr-result').style.display = 'block';
-    document.getElementById('start-scan-btn').textContent = '再スキャン';
-    document.getElementById('start-scan-btn').disabled = false;
-
-    // ステップ2を表示
-    document.getElementById('step2').style.display = 'block';
+    handleDeviceIdDetected(deviceId);
 }
 
 // カメラ停止
@@ -304,10 +331,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // イベントリスナー設定
+    document.getElementById('manual-input-btn').addEventListener('click', handleManualInput);
     document.getElementById('start-scan-btn').addEventListener('click', startQRScanner);
     document.getElementById('enable-notification-btn').addEventListener('click', requestNotificationPermission);
     document.getElementById('send-test-notification-btn').addEventListener('click', sendTestNotification);
     document.getElementById('refresh-devices-btn').addEventListener('click', loadDevices);
+
+    // Enterキーでも送信できるようにする
+    document.getElementById('manual-device-id').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleManualInput();
+        }
+    });
 
     // 初期デバイス一覧読み込み
     loadDevices();
