@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCM デバッグツール</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .section h2 {
+            font-size: 1.2rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .info-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: 600;
+            color: #555;
+        }
+        .value {
+            color: #333;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .status-ok {
+            color: #48bb78;
+            font-weight: bold;
+        }
+        .status-error {
+            color: #f56565;
+            font-weight: bold;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        pre {
+            background: #2d3748;
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.9rem;
+        }
+        .loading {
+            color: #667eea;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 FCM Web Push デバッグツール</h1>
+        
+        <div class="section">
+            <h2>📱 デバイス情報</h2>
+            <div class="info-item">
+                <span class="label">User Agent:</span><br>
+                <span class="value" id="userAgent"></span>
+            </div>
+            <div class="info-item">
+                <span class="label">Platform:</span>
+                <span class="value" id="platform"></span>
+            </div>
+            <div class="info-item">
+                <span class="label">画面サイズ:</span>
+                <span class="value" id="screenSize"></span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔔 通知権限</h2>
+            <div class="info-item">
+                <span class="label">Notification API:</span>
+                <span class="value" id="notificationSupport"></span>
+            </div>
+            <div class="info-item">
+                <span class="label">権限状態:</span>
+                <span class="value" id="notificationPermission"></span>
+            </div>
+            <button onclick="requestNotification()">通知を許可する</button>
+        </div>
+
+        <div class="section">
+            <h2>⚙️ Service Worker</h2>
+            <div class="info-item">
+                <span class="label">Service Worker API:</span>
+                <span class="value" id="swSupport"></span>
+            </div>
+            <div class="info-item">
+                <span class="label">登録状態:</span>
+                <span class="value" id="swRegistration"></span>
+            </div>
+            <div class="info-item">
+                <span class="label">アクティブ:</span>
+                <span class="value" id="swActive"></span>
+            </div>
+            <button onclick="checkServiceWorker()">Service Workerを確認</button>
+        </div>
+
+        <div class="section">
+            <h2>🔥 Firebase / FCM</h2>
+            <div class="info-item">
+                <span class="label">Firebase初期化:</span>
+                <span class="value" id="firebaseInit"></span>
+            </div>
+            <div class="info-item">
+                <span class="label">FCMトークン:</span><br>
+                <span class="value" id="fcmToken" class="loading">取得中...</span>
+            </div>
+            <button onclick="getToken()">トークンを取得</button>
+            <button onclick="deleteToken()">トークンを削除</button>
+        </div>
+
+        <div class="section">
+            <h2>📋 診断結果</h2>
+            <pre id="diagnosticResult">診断を実行してください...</pre>
+            <button onclick="runDiagnostics()">完全診断を実行</button>
+        </div>
+
+        <div class="section">
+            <h2>🧪 テスト通知</h2>
+            <button onclick="showTestNotification()">ブラウザ通知をテスト</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+    <script src="/js/config.js"></script>
+
+    <script>
+        let messaging = null;
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDeviceInfo();
+            checkNotificationSupport();
+            checkServiceWorker();
+            initializeFirebase();
+        });
+
+        function loadDeviceInfo() {
+            document.getElementById('userAgent').textContent = navigator.userAgent;
+            document.getElementById('platform').textContent = navigator.platform;
+            document.getElementById('screenSize').textContent = `${screen.width}x${screen.height}`;
+        }
+
+        function checkNotificationSupport() {
+            const supported = 'Notification' in window;
+            document.getElementById('notificationSupport').innerHTML = 
+                supported ? '<span class="status-ok">✅ サポート</span>' : '<span class="status-error">❌ 非サポート</span>';
+            
+            if (supported) {
+                document.getElementById('notificationPermission').textContent = Notification.permission;
+            }
+        }
+
+        async function checkServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                document.getElementById('swSupport').innerHTML = '<span class="status-ok">✅ サポート</span>';
+                
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                document.getElementById('swRegistration').textContent = 
+                    registrations.length > 0 ? `${registrations.length}個登録済み` : '未登録';
+                
+                const registration = await navigator.serviceWorker.ready;
+                document.getElementById('swActive').innerHTML = 
+                    registration.active ? '<span class="status-ok">✅ アクティブ</span>' : '<span class="status-error">❌ 非アクティブ</span>';
+            } else {
+                document.getElementById('swSupport').innerHTML = '<span class="status-error">❌ 非サポート</span>';
+            }
+        }
+
+        function initializeFirebase() {
+            try {
+                if (typeof firebase !== 'undefined') {
+                    firebase.initializeApp(firebaseConfig);
+                    messaging = firebase.messaging();
+                    document.getElementById('firebaseInit').innerHTML = '<span class="status-ok">✅ 成功</span>';
+                    getToken();
+                } else {
+                    document.getElementById('firebaseInit').innerHTML = '<span class="status-error">❌ Firebase SDKが読み込まれていません</span>';
+                }
+            } catch (error) {
+                document.getElementById('firebaseInit').innerHTML = '<span class="status-error">❌ エラー: ' + error.message + '</span>';
+            }
+        }
+
+        async function requestNotification() {
+            try {
+                const permission = await Notification.requestPermission();
+                document.getElementById('notificationPermission').textContent = permission;
+                if (permission === 'granted') {
+                    alert('通知が許可されました！');
+                    getToken();
+                }
+            } catch (error) {
+                alert('エラー: ' + error.message);
+            }
+        }
+
+        async function getToken() {
+            if (!messaging) {
+                document.getElementById('fcmToken').innerHTML = '<span class="status-error">❌ Messagingが初期化されていません</span>';
+                return;
+            }
+
+            try {
+                const token = await messaging.getToken({ vapidKey: vapidKey });
+                if (token) {
+                    document.getElementById('fcmToken').textContent = token;
+                    console.log('FCM Token:', token);
+                } else {
+                    document.getElementById('fcmToken').innerHTML = '<span class="status-error">❌ トークンを取得できませんでした</span>';
+                }
+            } catch (error) {
+                document.getElementById('fcmToken').innerHTML = '<span class="status-error">❌ エラー: ' + error.message + '</span>';
+                console.error('Token error:', error);
+            }
+        }
+
+        async function deleteToken() {
+            if (!messaging) {
+                alert('Messagingが初期化されていません');
+                return;
+            }
+
+            try {
+                await messaging.deleteToken();
+                document.getElementById('fcmToken').textContent = 'トークンを削除しました';
+                alert('トークンを削除しました。ページをリロードしてください。');
+            } catch (error) {
+                alert('エラー: ' + error.message);
+            }
+        }
+
+        async function runDiagnostics() {
+            const result = {
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                notificationSupport: 'Notification' in window,
+                notificationPermission: Notification.permission,
+                serviceWorkerSupport: 'serviceWorker' in navigator,
+                serviceWorkerRegistrations: null,
+                firebaseInitialized: messaging !== null,
+                fcmToken: null,
+                errors: []
+            };
+
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    result.serviceWorkerRegistrations = registrations.length;
+                }
+
+                if (messaging && Notification.permission === 'granted') {
+                    try {
+                        result.fcmToken = await messaging.getToken({ vapidKey: vapidKey });
+                    } catch (error) {
+                        result.errors.push('FCMトークン取得エラー: ' + error.message);
+                    }
+                }
+            } catch (error) {
+                result.errors.push('診断エラー: ' + error.message);
+            }
+
+            document.getElementById('diagnosticResult').textContent = JSON.stringify(result, null, 2);
+            console.log('Diagnostic Result:', result);
+        }
+
+        function showTestNotification() {
+            if (Notification.permission !== 'granted') {
+                alert('先に通知を許可してください');
+                return;
+            }
+
+            new Notification('テスト通知', {
+                body: 'これはテスト通知です',
+                icon: '/icon.png',
+                badge: '/badge.png'
+            });
+        }
+    </script>
+</body>
+</html>
