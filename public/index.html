@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCM Web Push Notification</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📱 Web Push通知</h1>
+            <p>QRコードを読み取って通知を受信</p>
+        </header>
+
+        <main>
+            <!-- ステップ1: QRコード読み取り -->
+            <section class="card" id="step1">
+                <h2>📸 ステップ1: QRコード読み取り</h2>
+                <div id="qr-reader-section">
+                    <button id="start-scan-btn" class="btn btn-primary">カメラを起動</button>
+                    <video id="qr-video" style="display: none;"></video>
+                    <canvas id="qr-canvas" style="display: none;"></canvas>
+                    <div id="qr-result" class="result-box" style="display: none;">
+                        <p>デバイスID: <strong id="device-id-display"></strong></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ステップ2: 通知許可 -->
+            <section class="card" id="step2" style="display: none;">
+                <h2>🔔 ステップ2: 通知を許可</h2>
+                <p>プッシュ通知を受信するには、通知の許可が必要です。</p>
+                <button id="enable-notification-btn" class="btn btn-primary">通知を許可する</button>
+                <div id="notification-status" class="status-box"></div>
+            </section>
+
+            <!-- ステップ3: 登録完了 -->
+            <section class="card" id="step3" style="display: none;">
+                <h2>✅ ステップ3: 登録完了</h2>
+                <div class="success-box">
+                    <p>✨ 登録が完了しました！</p>
+                    <p>デバイスID: <strong id="registered-device-id"></strong></p>
+                    <p>このデバイスでプッシュ通知を受信できます。</p>
+                </div>
+            </section>
+
+            <!-- テスト送信セクション（開発用） -->
+            <section class="card dev-section">
+                <h2>🧪 テスト通知送信（開発用）</h2>
+                <div class="form-group">
+                    <label for="test-device-id">デバイスID (10桁の数字):</label>
+                    <input type="text" id="test-device-id" placeholder="1234567890" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label for="test-title">タイトル:</label>
+                    <input type="text" id="test-title" placeholder="テスト通知" value="テスト通知">
+                </div>
+                <div class="form-group">
+                    <label for="test-message">メッセージ:</label>
+                    <textarea id="test-message" placeholder="これはテストメッセージです" rows="3">これはテストメッセージです</textarea>
+                </div>
+                <button id="send-test-notification-btn" class="btn btn-secondary">テスト通知を送信</button>
+                <div id="test-result" class="status-box"></div>
+            </section>
+
+            <!-- デバイス一覧（開発用） -->
+            <section class="card dev-section">
+                <h2>📋 登録済みデバイス一覧</h2>
+                <button id="refresh-devices-btn" class="btn btn-secondary">更新</button>
+                <div id="devices-list" class="devices-list"></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Powered by Firebase Cloud Messaging</p>
+        </footer>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+    
+    <!-- jsQR ライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    
+    <!-- アプリケーションスクリプト -->
+    <script src="/js/config.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
