@@ -5,11 +5,29 @@ Firebase Cloud Messaging (FCM) を使用したWeb Push通知システムです�
 ## 📋 機能
 
 - ✅ QRコードスキャン（カメラ使用）
+- ✅ デバイスID手動入力（テスト用）
 - ✅ デバイス登録（10桁のデバイスID）
 - ✅ Web Push通知の送受信
 - ✅ 通知送信API
 - ✅ デバイス管理
 - ✅ iPhone・Androidスマホ対応
+
+## 🏗️ デプロイオプション
+
+このプロジェクトは2つのデプロイ方法をサポートしています:
+
+### オプション1: Google Cloud（推奨）
+- **Firebase Hosting** でフロントエンドをホスティング
+- **Cloud Functions** でAPIを実行
+- **Cloud Firestore** でデータ管理
+- 完全にサーバーレス、自動スケーリング
+- **詳細**: [CLOUD_DEPLOYMENT.md](CLOUD_DEPLOYMENT.md) を参照
+
+### オプション2: ローカルサーバー（開発・テスト用）
+- **Node.js/Express** でサーバーを起動
+- ローカルまたは任意のホスティングサービス
+- 開発やテストに最適
+- **詳細**: 以下のローカルセットアップ手順を参照
 
 ## 🚀 セットアップ手順
 

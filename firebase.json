@@ -1,0 +1,47 @@
+{
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/register",
+        "function": "registerDevice"
+      },
+      {
+        "source": "/api/send-notification",
+        "function": "sendNotification"
+      },
+      {
+        "source": "/api/devices",
+        "function": "getDevices"
+      },
+      {
+        "source": "/api/health",
+        "function": "healthCheck"
+      }
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(js|css)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "max-age=3600"
+          }
+        ]
+      }
+    ]
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs18"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}
