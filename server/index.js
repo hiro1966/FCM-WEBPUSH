@@ -3,6 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const admin = require('firebase-admin');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -173,6 +174,53 @@ app.get('/api/devices', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Failed to get devices', 
+      error: error.message 
+    });
+  }
+});
+
+// サービスアカウントキーのアップロード（開発用）
+app.post('/api/upload-service-account', async (req, res) => {
+  try {
+    const { content } = req.body;
+
+    if (!content) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'content is required' 
+      });
+    }
+
+    // JSONが有効かチェック
+    try {
+      JSON.parse(content);
+    } catch (error) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid JSON format' 
+      });
+    }
+
+    // configディレクトリが存在しない場合は作成
+    const configDir = path.join(__dirname, '../config');
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+    }
+
+    // ファイルに保存
+    const filePath = path.join(configDir, 'serviceAccountKey.json');
+    fs.writeFileSync(filePath, content, 'utf8');
+
+    res.json({ 
+      success: true, 
+      message: 'Service account key uploaded successfully. Please restart the server.' 
+    });
+
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to upload', 
       error: error.message 
     });
   }
